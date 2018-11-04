@@ -26,7 +26,7 @@
  *	[33] -> Open space that can be used for something else later
  *
  *	The primary index files are arranged in the following format:
- *	MATRICULA + NOME [30] | [1] | Position of record in the original file [?]
+ *	MATRICULA + NOME [30] | Position of record in the original file [2]
  *	Ideia: Excluir o espaço [1] e colocar a posicao como 2 bytes, deixando cada registro de index com 32 bytes
  *
  *	Ex: (Adotando a ideia)
@@ -41,6 +41,7 @@
 #include<cstdlib>
 #include<fstream>
 #include<string>
+#include<bitset>
 
 /* Defines de tamanho */
 
@@ -121,29 +122,74 @@ bool open_file(ifstream &source, char *name){
 	
 }
 
-void fill_index(ifstream &source){
+void fill_index(ifstream &source, string reading =""){
 	
 }
 
-short have_header(ifstream &file){
-	char str[7];
-	string first_reading;
+short have_header(ifstream &file, string &reading){
+	char str[65];
+	char confirm;
 	
-	file.get(str, 7);	// Reads 6 bytes and put a '\0' in the char *
+	// The get method reads the second argument number of bytes, with a null terminated number
+	file.get(str, 63);	// Reads 62 bytes and put a '\0' in the str, 62 because a '\r' and '\n' completes the size of 64 bytes 
 	
-	if(!file.eof()){
-		first_reading = string(str);
-		cout << first_reading << endl;
-		if(first_reading == "HEADER")
-			return 1;
-		else
-			return 0;
+	file.get(confirm);	//	Reads extra '\r' or '\n'
+	if(file.eof()){
+		cout << "Could not read file!" << endl;
+		return -1;
+	}
+	if(confirm == '\r'){	// Windows format
+		file.get(confirm);
+		if(confirm != '\n' || file.eof()){
+			cout << "File in not supported format!" << endl;
+			return -1;
+		};
+	}
+	else if(confirm == '\n'){	// UNIX format
+		// Does absolutely nothing for now
 	}
 	else {
-		cout << "Error while reading from file!" << endl;
+		cout << "File in not supported format!" << endl;
+		return -1;
+	};	
+
+	reading = string(str);	
+	
+	// After this, a whole 62 byte sequence will be in the string reading
+
+	cout << reading << endl;
+
+	if(reading.substr(0, 6) == "HEADER")
+		return 1;
+	else
+		return 0;
+	
+	return 0;
+}
+
+int get_file_size(string lgt){
+	int i, j, size=0;
+	
+	cout << lgt << endl;
+	
+	for(i=0;i<3;i++){
+		if(lgt[i] == ' ')
+			break;
 	};
 	
-	return -1;
+	j = 0;
+	
+	for(i=i-1;i>=0;i--, j++){
+		size |= (lgt[j] << (8*i));
+	};
+	
+	cout << size << endl;
+}
+
+void read_header(string reading){
+	int size = 0;
+	
+	size = get_file_size(reading.substr(7, 3));
 }
 
 int main(int argc, char **argv){
@@ -161,13 +207,19 @@ int main(int argc, char **argv){
 		return 0;
 		
 	short result;	
+	string reading;
 		
 	// Create index file
-	if((result = have_header(file)) == 1){
+	if((result = have_header(file, reading)) == 1){
 		cout << "Header success!, reading header file..." << endl;
+		read_header(reading);
+		fill_index(file);
 	}
 	else if(result == 0){
 		cout << "File does not have any header yet." << endl;
+		cout << reading << endl;
+		//have_header(file, reading);
+		fill_index(file, reading);
 	}
 	else {
 		cout << "File does not exist!" << endl;
