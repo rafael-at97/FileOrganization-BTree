@@ -1,0 +1,6 @@
+Alunos: Rafael Augusto Torres - 15/0145365
+		David Potolski Lafeta - 15/0122969
+		
+		Para compilar o programa, digitar "make" na pasta com todos os arquivos .cpp e .h
+		
+		Para rodar o programa digitar "./arvoreB <arquivo>", onde <arquivo> é o nome do arquivo de registros
